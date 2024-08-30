@@ -95,6 +95,33 @@ class QuestionModelTests(TestCase):
         recent_question = Question(pub_date=time)
         self.assertIs(recent_question.was_published_recently(), True)
 
+    def test_is_published_with_future_question(self):
+        """
+        is_published() returns False for questions whose pub_date is in the future.
+        """
+        future_time = timezone.now() + datetime.timedelta(days=5)
+        future_question = Question(question_text='Future question.', pub_date=future_time)
+        future_question.save()
+        self.assertFalse(future_question.is_published())
+
+    def test_is_published_with_default_pub_date(self):
+        """
+        is_published() returns True for questions with the default pub_date (now).
+        """
+        now = timezone.localtime(timezone.now())
+        default_question = Question(question_text='Default pub date question.', pub_date=now)
+        default_question.save()
+        self.assertTrue(default_question.is_published())
+
+    def test_is_published_with_past_question(self):
+        """
+        is_published() returns True for questions whose pub_date is in the past.
+        """
+        past_time = timezone.now() - datetime.timedelta(days=30)
+        past_question = Question(question_text='Past question.', pub_date=past_time)
+        past_question.save()
+        self.assertTrue(past_question.is_published())
+
 
 class QuestionDetailViewTests(TestCase):
     def test_future_question(self):
