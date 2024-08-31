@@ -148,6 +148,12 @@ class QuestionModelTests(TestCase):
         expired_question = Question(pub_date=pub_date, end_date=end_date)
         self.assertFalse(expired_question.can_vote())
 
+    def test_can_vote_if_no_end_date(self):
+        """Can vote if there is no end date set."""
+        pub_date = timezone.now() - datetime.timedelta(days=1)
+        no_end_date_question = Question(pub_date=pub_date)
+        self.assertTrue(no_end_date_question.can_vote())
+
 
 class QuestionDetailViewTests(TestCase):
     def test_future_question(self):
