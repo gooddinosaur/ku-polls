@@ -26,6 +26,13 @@ class IndexView(generic.ListView):
         return Question.objects.filter(pub_date__lte=timezone.now()
                                        ).order_by('-pub_date')[:5]
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['poll_status'] = {
+            question.id: 'Open' if question.can_vote() else 'Closed' for
+            question in context['latest_question_list']}
+        return context
+
 
 class DetailView(generic.DetailView):
     """ Displays details for a specific question. """

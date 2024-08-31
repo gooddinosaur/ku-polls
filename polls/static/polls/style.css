@@ -4,3 +4,14 @@ li a {
 body {
     background: white url("images/background.png") no-repeat;
 }
+.status {
+    font-weight: bold;
+}
+
+.status.open {
+    color: green;
+}
+
+.status.closed {
+    color: red;
+}

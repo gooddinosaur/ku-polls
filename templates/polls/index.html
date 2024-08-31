@@ -15,6 +15,11 @@
             <li>
                 <a href="{% url 'polls:detail' question.id %}">{{ question.question_text }}</a> -
                 <a href="{% url 'polls:results' question.id %}">Results</a>
+                {% if question.can_vote %}
+                    <span class="status open">Open</span>
+                {% else %}
+                    <span class="status closed">Closed</span>
+                {% endif %}
             </li>
         {% endfor %}
     </ul>
