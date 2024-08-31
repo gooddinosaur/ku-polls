@@ -1,0 +1,31 @@
+h1 {
+    font-size: 1.5em;
+    text-align: left;
+    margin-bottom: 20px;
+}
+table {
+    width: 50%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+th {
+    background-color: #f4f4f4;
+}
+
+.vote-count {
+    text-align: center;
+    font-weight: bold;
+}
+
+/*Adding space between columns*/
+td, th {
+    padding-left: 20px;
+    padding-right: 20px;
+}
