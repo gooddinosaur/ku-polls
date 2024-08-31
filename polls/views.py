@@ -1,16 +1,16 @@
 """
 Views for the polls app.
 
-Handles displaying questions, their details, and results, as well as processing votes.
+Handles displaying questions, their details, and results, as well as processing
+votes.
 """
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views import generic
-from .models import Choice, Question
 from django.utils import timezone
 from django.contrib import messages
-from django.template import loader
+from .models import Choice, Question
 
 
 class IndexView(generic.ListView):
@@ -39,7 +39,8 @@ class DetailView(generic.DetailView):
         return Question.objects.filter(pub_date__lte=timezone.now())
 
     def dispatch(self, request, *args, **kwargs):
-        """Check if voting is allowed; if not, redirect to index with an error message."""
+        """Check if voting is allowed; if not, redirect to index
+        with an error message."""
         question = self.get_object()
         if not question.can_vote():
             messages.error(request, "Voting is not allowed for this poll.")

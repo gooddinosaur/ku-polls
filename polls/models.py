@@ -21,7 +21,8 @@ class Question(models.Model):
         return now - datetime.timedelta(days=1) <= self.pub_date <= now
 
     def is_published(self):
-        """ Returns True if the current date and time is on or after the question's publication date. """
+        """ Returns True if the current date and time is on or
+        after the question's publication date. """
         now = timezone.localtime(timezone.now())
         return now >= self.pub_date
 
