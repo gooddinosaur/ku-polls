@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.views import generic
 from django.utils import timezone
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from .models import Choice, Question
 
 
@@ -61,6 +62,7 @@ class ResultsView(generic.DetailView):
     template_name = 'polls/results.html'
 
 
+@login_required
 def vote(request, question_id):
     """ Handles voting on a specific question by updating the selected choice's
     vote count. Redirects to the results page or shows an error if no choice
