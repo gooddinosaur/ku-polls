@@ -37,3 +37,6 @@ th {
 .status.closed {
     color: red;
 }
+.messages li {
+    color: red;
+}
