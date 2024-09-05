@@ -11,8 +11,9 @@ from django.views import generic
 from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Choice, Question
-
+from .models import Choice, Question, Vote
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm
 
 class IndexView(generic.ListView):
     """ Displays a list of the latest published questions. """
@@ -36,7 +37,7 @@ class IndexView(generic.ListView):
 
 
 class DetailView(generic.DetailView):
-    """ Displays details for a specific question. """
+    """ Display the choices for a poll and allow voting."""
     model = Question
     template_name = 'polls/detail.html'
 
@@ -83,3 +84,47 @@ def vote(request, question_id):
         selected_choice.save()
         return HttpResponseRedirect(
             reverse('polls:results', args=(question.id,)))
+    # # Reference to the current user
+    # this_user = request.user
+    #
+    # # Get the user's vote
+    # try:
+    #     # vote = this_user.vote_set.get(choice__question=question)
+    #     vote = Vote.objects.get(user=this_user, choice__question=question)
+    #     # user has a vote for this question! Update his choice.
+    #     vote.choice = selected_choice
+    #     vote.save()
+    #     messages.success(f"Your vote was updated to '{selected_choice.choice_text}'")
+    # except (KeyError, Vote.DoesNotExist):
+    #     # does not have a vote yet
+    #     vote = Vote.objects.create(user=this_user, choice=selected_choice)
+    #     # automatically saved
+    #     messages.success(f"You vote for '{selected_choice.choice_text}'")
+    #
+    # # mark this user as having voted
+    #
+    # # selected_choice.votes += 1
+    # # selected_choice.save()
+    # return HttpResponseRedirect(
+    #     reverse('polls:results', args=(question.id,)))
+
+
+def signup(request):
+    """Register a new user."""
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            # get named fields from the form data
+            username = form.cleaned_data.get('username')
+            # password input field is named 'password1'
+            raw_passwd = form.cleaned_data.get('password1')
+            user = authenticate(username=username,password=raw_passwd)
+            login(request, user)
+            return redirect('polls:index')
+        # what if form is not valid?
+        # we should display a message in signup.html
+    else:
+        # create a user form and display it the signup page
+        form = UserCreationForm()
+    return render(request, 'registration/signup.html', {'form': form})
