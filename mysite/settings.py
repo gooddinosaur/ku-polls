@@ -106,6 +106,7 @@ AUTHENTICATION_BACKENDS = [
 LOGIN_REDIRECT_URL = 'polls:index'
 LOGOUT_REDIRECT_URL = 'login'
 
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 

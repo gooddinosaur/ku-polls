@@ -15,6 +15,7 @@ from .models import Choice, Question, Vote
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 
+
 class IndexView(generic.ListView):
     """ Displays a list of the latest published questions. """
     template_name = 'polls/index.html'
@@ -68,6 +69,9 @@ def vote(request, question_id):
     """ Handles voting on a specific question by updating the selected choice's
     vote count. Redirects to the results page or shows an error if no choice
     was selected. """
+    user = request.user
+    print("current user is", user.id, "login", user.username)
+    print("Real name:", user.first_name, user.last_name)
     question = get_object_or_404(Question, pk=question_id)
     if not question.can_vote():
         messages.error(request, "Voting is not allowed for this poll.")
@@ -79,34 +83,18 @@ def vote(request, question_id):
             'question': question,
             'error_message': "You didn't select a choice.",
         })
+    # Check if the user has already voted for this question
+    existing_vote = Vote.objects.get(user=user, choice__question=question)
+    if existing_vote:
+        # Update the existing vote
+        existing_vote.choice = selected_choice
+        existing_vote.save()
     else:
-        selected_choice.votes += 1
-        selected_choice.save()
-        return HttpResponseRedirect(
-            reverse('polls:results', args=(question.id,)))
-    # # Reference to the current user
-    # this_user = request.user
-    #
-    # # Get the user's vote
-    # try:
-    #     # vote = this_user.vote_set.get(choice__question=question)
-    #     vote = Vote.objects.get(user=this_user, choice__question=question)
-    #     # user has a vote for this question! Update his choice.
-    #     vote.choice = selected_choice
-    #     vote.save()
-    #     messages.success(f"Your vote was updated to '{selected_choice.choice_text}'")
-    # except (KeyError, Vote.DoesNotExist):
-    #     # does not have a vote yet
-    #     vote = Vote.objects.create(user=this_user, choice=selected_choice)
-    #     # automatically saved
-    #     messages.success(f"You vote for '{selected_choice.choice_text}'")
-    #
-    # # mark this user as having voted
-    #
-    # # selected_choice.votes += 1
-    # # selected_choice.save()
-    # return HttpResponseRedirect(
-    #     reverse('polls:results', args=(question.id,)))
+        # Create a new vote
+        new_vote = Vote(user=user, choice=selected_choice)
+        new_vote.save()
+    return HttpResponseRedirect(reverse("polls:results",
+                                        args=(question.id,)))
 
 
 def signup(request):
@@ -119,7 +107,7 @@ def signup(request):
             username = form.cleaned_data.get('username')
             # password input field is named 'password1'
             raw_passwd = form.cleaned_data.get('password1')
-            user = authenticate(username=username,password=raw_passwd)
+            user = authenticate(username=username, password=raw_passwd)
             login(request, user)
             return redirect('polls:index')
         # what if form is not valid?
