@@ -57,6 +57,17 @@ class DetailView(generic.DetailView):
             return redirect('polls:index')
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        """ Add the user's previous vote to the context. """
+        context = super().get_context_data(**kwargs)
+        question = self.get_object()
+        user = self.request.user
+        if user.is_authenticated:
+            previous_vote = Vote.objects.filter(user=user,
+                                                choice__question=question).first()
+            context['previous_vote'] = previous_vote
+        return context
+
 
 class ResultsView(generic.DetailView):
     """ Displays the results for a specific question. """
