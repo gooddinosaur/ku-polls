@@ -5,7 +5,7 @@
         <button type="submit" style="color: black;">Logout</button>
     </form>
 {% else %}
-    <span style="color: black;">Please <a href="{% url 'login' %}?next={{ request.path }}" style="color: white;">Login</a></span>
+    <span style="color: black;">Please <a href="{% url 'login' %}?next={{ request.path }}" style="color: black;">Login</a></span>
 {% endif %}
 
 <form action="{% url 'polls:vote' question.id %}" method="post">
