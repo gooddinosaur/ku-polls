@@ -90,11 +90,13 @@ def vote(request, question_id):
     logger.info(f"User {user.username} is voting on question {question_id}")
     question = get_object_or_404(Question, pk=question_id)
     ip = get_client_ip(request)
+
     if not question.can_vote():
         logger.warning(
             f"User {user.username} tried to vote on closed question {question_id} from {ip}")
         messages.error(request, "Voting is not allowed for this poll.")
         return redirect('polls:index')
+
     try:
         selected_choice = question.choice_set.get(pk=request.POST['choice'])
         logger.info(
@@ -105,19 +107,20 @@ def vote(request, question_id):
             'question': question,
             'error_message': "You didn't select a choice.",
         })
-    # Check if the user has already voted for this question
-    existing_vote = Vote.objects.get(user=user, choice__question=question)
-    if existing_vote:
-        # Update the existing vote
+
+    try:
+        # Check if the user has already voted for this question
+        existing_vote = Vote.objects.get(user=user, choice__question=question)
+        # If the user has already voted, update the vote
         logger.info(
             f"User {user.username} is updating their vote to choice "
             f"{selected_choice.id} on question {question_id} from {ip}")
         existing_vote.choice = selected_choice
         existing_vote.save()
-    else:
-        # Create a new vote
+    except Vote.DoesNotExist:
+        # If the user hasn't voted yet, create a new vote
         logger.info(
-            f"User {user.username} is vote to choice {selected_choice.id} "
+            f"User {user.username} is voting for choice {selected_choice.id} "
             f"on question {question_id} from {ip}")
         new_vote = Vote(user=user, choice=selected_choice)
         new_vote.save()
