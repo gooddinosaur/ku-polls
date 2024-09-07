@@ -1,6 +1,6 @@
 from django.urls import path
 from django.views.generic.base import RedirectView
-from . import views
+import polls.views as views
 
 app_name = 'polls'
 
