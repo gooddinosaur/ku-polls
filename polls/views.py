@@ -4,13 +4,22 @@ Views for the polls app.
 Handles displaying questions, their details, and results, as well as processing
 votes.
 """
+from django.contrib.auth.signals import user_logged_in, user_logged_out, \
+    user_login_failed
+from django.dispatch import receiver
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.views import generic
 from django.utils import timezone
 from django.contrib import messages
-from .models import Choice, Question
+from django.contrib.auth.decorators import login_required
+from polls.models import Choice, Question, Vote
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class IndexView(generic.ListView):
@@ -35,7 +44,7 @@ class IndexView(generic.ListView):
 
 
 class DetailView(generic.DetailView):
-    """ Displays details for a specific question. """
+    """ Display the choices for a poll and allow voting."""
     model = Question
     template_name = 'polls/detail.html'
 
@@ -54,6 +63,17 @@ class DetailView(generic.DetailView):
             return redirect('polls:index')
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        """ Add the user's previous vote to the context. """
+        context = super().get_context_data(**kwargs)
+        question = self.get_object()
+        user = self.request.user
+        if user.is_authenticated:
+            previous_vote = Vote.objects.filter(user=user,
+                                                choice__question=question).first()
+            context['previous_vote'] = previous_vote
+        return context
+
 
 class ResultsView(generic.DetailView):
     """ Displays the results for a specific question. """
@@ -61,23 +81,103 @@ class ResultsView(generic.DetailView):
     template_name = 'polls/results.html'
 
 
+@login_required
 def vote(request, question_id):
     """ Handles voting on a specific question by updating the selected choice's
     vote count. Redirects to the results page or shows an error if no choice
     was selected. """
+    user = request.user
+    logger.info(f"User {user.username} is voting on question {question_id}")
     question = get_object_or_404(Question, pk=question_id)
+    ip = get_client_ip(request)
+
     if not question.can_vote():
+        logger.warning(
+            f"User {user.username} tried to vote on closed question {question_id} from {ip}")
         messages.error(request, "Voting is not allowed for this poll.")
         return redirect('polls:index')
+
     try:
         selected_choice = question.choice_set.get(pk=request.POST['choice'])
+        logger.info(
+            f"User {user.username} selected choice {selected_choice.id} from {ip}")
     except (KeyError, Choice.DoesNotExist):
+        logger.error(f"Choice does not exist for question {question_id}")
         return render(request, 'polls/detail.html', {
             'question': question,
             'error_message': "You didn't select a choice.",
         })
+
+    try:
+        # Check if the user has already voted for this question
+        existing_vote = Vote.objects.get(user=user, choice__question=question)
+        # If the user has already voted, update the vote
+        logger.info(
+            f"User {user.username} is updating their vote to choice "
+            f"{selected_choice.id} on question {question_id} from {ip}")
+        existing_vote.choice = selected_choice
+        existing_vote.save()
+    except Vote.DoesNotExist:
+        # If the user hasn't voted yet, create a new vote
+        logger.info(
+            f"User {user.username} is voting for choice {selected_choice.id} "
+            f"on question {question_id} from {ip}")
+        new_vote = Vote(user=user, choice=selected_choice)
+        new_vote.save()
+
+    # Show success message
+    messages.success(request,
+                     f"Your vote for '{selected_choice.choice_text}' "
+                     f"has been recorded.")
+    return HttpResponseRedirect(reverse("polls:results",
+                                        args=(question.id,)))
+
+
+def signup(request):
+    """Register a new user."""
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            # get named fields from the form data
+            username = form.cleaned_data.get('username')
+            # password input field is named 'password1'
+            raw_passwd = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=raw_passwd)
+            login(request, user)
+            return redirect('polls:index')
+        # what if form is not valid?
+        # we should display a message in signup.html
     else:
-        selected_choice.votes += 1
-        selected_choice.save()
-        return HttpResponseRedirect(
-            reverse('polls:results', args=(question.id,)))
+        # create a user form and display it the signup page
+        form = UserCreationForm()
+    return render(request, 'registration/signup.html', {'form': form})
+
+
+def get_client_ip(request):
+    """Get the visitor’s IP address using request headers."""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+@receiver(user_logged_in)
+def login_success(sender, request, user, **kwargs):
+    ip_addr = get_client_ip(request)
+    logger.info(f"{user.username} logged in from {ip_addr}")
+
+
+@receiver(user_logged_out)
+def logout_success(sender, request, user, **kwargs):
+    ip_addr = get_client_ip(request)
+    logger.info(f"{user.username} logged out from {ip_addr}")
+
+
+@receiver(user_login_failed)
+def login_fail(sender, credentials, request, **kwargs):
+    ip_addr = get_client_ip(request)
+    logger.warning(
+        f"Failed login for {credentials.get('username', 'unknown')} from {ip_addr}")
