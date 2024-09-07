@@ -4,6 +4,9 @@ Views for the polls app.
 Handles displaying questions, their details, and results, as well as processing
 votes.
 """
+from django.contrib.auth.signals import user_logged_in, user_logged_out, \
+    user_login_failed
+from django.dispatch import receiver
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -16,8 +19,9 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 import logging
 
-
 logger = logging.getLogger(__name__)
+
+
 class IndexView(generic.ListView):
     """ Displays a list of the latest published questions. """
     template_name = 'polls/index.html'
@@ -85,15 +89,16 @@ def vote(request, question_id):
     user = request.user
     logger.info(f"User {user.username} is voting on question {question_id}")
     question = get_object_or_404(Question, pk=question_id)
+    ip = get_client_ip(request)
     if not question.can_vote():
         logger.warning(
-            f"User {user.username} tried to vote on closed question {question_id}")
+            f"User {user.username} tried to vote on closed question {question_id} from {ip}")
         messages.error(request, "Voting is not allowed for this poll.")
         return redirect('polls:index')
     try:
         selected_choice = question.choice_set.get(pk=request.POST['choice'])
         logger.info(
-            f"User {user.username} selected choice {selected_choice.id}")
+            f"User {user.username} selected choice {selected_choice.id} from {ip}")
     except (KeyError, Choice.DoesNotExist):
         logger.error(f"Choice does not exist for question {question_id}")
         return render(request, 'polls/detail.html', {
@@ -106,14 +111,14 @@ def vote(request, question_id):
         # Update the existing vote
         logger.info(
             f"User {user.username} is updating their vote to choice "
-            f"{selected_choice.id} on question {question_id}")
+            f"{selected_choice.id} on question {question_id} from {ip}")
         existing_vote.choice = selected_choice
         existing_vote.save()
     else:
         # Create a new vote
         logger.info(
             f"User {user.username} is vote to choice {selected_choice.id} "
-            f"on question {question_id}")
+            f"on question {question_id} from {ip}")
         new_vote = Vote(user=user, choice=selected_choice)
         new_vote.save()
 
@@ -154,3 +159,22 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+
+@receiver(user_logged_in)
+def login_success(sender, request, user, **kwargs):
+    ip_addr = get_client_ip(request)
+    logger.info(f"{user.username} logged in from {ip_addr}")
+
+
+@receiver(user_logged_out)
+def logout_success(sender, request, user, **kwargs):
+    ip_addr = get_client_ip(request)
+    logger.info(f"{user.username} logged out from {ip_addr}")
+
+
+@receiver(user_login_failed)
+def login_fail(sender, credentials, request, **kwargs):
+    ip_addr = get_client_ip(request)
+    logger.warning(
+        f"Failed login for {credentials.get('username', 'unknown')} from {ip_addr}")
