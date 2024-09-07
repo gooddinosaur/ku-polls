@@ -14,8 +14,10 @@ from django.contrib.auth.decorators import login_required
 from polls.models import Choice, Question, Vote
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
+import logging
 
 
+logger = logging.getLogger(__name__)
 class IndexView(generic.ListView):
     """ Displays a list of the latest published questions. """
     template_name = 'polls/index.html'
@@ -81,15 +83,19 @@ def vote(request, question_id):
     vote count. Redirects to the results page or shows an error if no choice
     was selected. """
     user = request.user
-    print("current user is", user.id, "login", user.username)
-    print("Real name:", user.first_name, user.last_name)
+    logger.info(f"User {user.username} is voting on question {question_id}")
     question = get_object_or_404(Question, pk=question_id)
     if not question.can_vote():
+        logger.warning(
+            f"User {user.username} tried to vote on closed question {question_id}")
         messages.error(request, "Voting is not allowed for this poll.")
         return redirect('polls:index')
     try:
         selected_choice = question.choice_set.get(pk=request.POST['choice'])
+        logger.info(
+            f"User {user.username} selected choice {selected_choice.id}")
     except (KeyError, Choice.DoesNotExist):
+        logger.error(f"Choice does not exist for question {question_id}")
         return render(request, 'polls/detail.html', {
             'question': question,
             'error_message': "You didn't select a choice.",
@@ -98,10 +104,16 @@ def vote(request, question_id):
     existing_vote = Vote.objects.get(user=user, choice__question=question)
     if existing_vote:
         # Update the existing vote
+        logger.info(
+            f"User {user.username} is updating their vote to choice "
+            f"{selected_choice.id} on question {question_id}")
         existing_vote.choice = selected_choice
         existing_vote.save()
     else:
         # Create a new vote
+        logger.info(
+            f"User {user.username} is vote to choice {selected_choice.id} "
+            f"on question {question_id}")
         new_vote = Vote(user=user, choice=selected_choice)
         new_vote.save()
 
@@ -132,3 +144,13 @@ def signup(request):
         # create a user form and display it the signup page
         form = UserCreationForm()
     return render(request, 'registration/signup.html', {'form': form})
+
+
+def get_client_ip(request):
+    """Get the visitor’s IP address using request headers."""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
