@@ -25,7 +25,7 @@ To set up the project, follow these steps:
   ```
   pip install -r requirements.txt
   ```
-6. **Create a .env file by copying the contents of sample.env**
+6. **Set env variables**
    - On Windows:
      ```
      copy sample.env .env
@@ -34,6 +34,7 @@ To set up the project, follow these steps:
      ```
      cp sample.env .env
      ```
+Note: After copying, ensure that you update the .env file with any environment-specific values as necessary.
 7. **Create migrations for any changes in the models**
   ```
   python manage.py makemigrations
