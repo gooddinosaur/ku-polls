@@ -29,10 +29,9 @@ class IndexView(generic.ListView):
     context_object_name = 'latest_question_list'
 
     def get_queryset(self):
-        """Return the last five published questions."""
-        """(Not including those set to be published in the future)."""
+        """Return all questions published, ordered by publication date."""
         return Question.objects.filter(pub_date__lte=timezone.now()
-                                       ).order_by('-pub_date')[:5]
+                                       ).order_by('-pub_date')
 
     def get_context_data(self, **kwargs):
         """Get the context data and add poll status."""
