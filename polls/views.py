@@ -23,19 +23,19 @@ logger = logging.getLogger(__name__)
 
 
 class IndexView(generic.ListView):
-    """ Displays a list of the latest published questions. """
+    """Displays a list of the latest published questions."""
+
     template_name = 'polls/index.html'
     context_object_name = 'latest_question_list'
 
     def get_queryset(self):
-        """
-        Return the last five published questions (not including those set to be
-        published in the future).
-        """
+        """Return the last five published questions."""
+        """(Not including those set to be published in the future)."""
         return Question.objects.filter(pub_date__lte=timezone.now()
                                        ).order_by('-pub_date')[:5]
 
     def get_context_data(self, **kwargs):
+        """Get the context data and add poll status."""
         context = super().get_context_data(**kwargs)
         context['poll_status'] = {
             question.id: 'Open' if question.can_vote() else 'Closed' for
@@ -44,19 +44,18 @@ class IndexView(generic.ListView):
 
 
 class DetailView(generic.DetailView):
-    """ Display the choices for a poll and allow voting."""
+    """Display the choices for a poll and allow voting."""
+
     model = Question
     template_name = 'polls/detail.html'
 
     def get_queryset(self):
-        """
-        Excludes any questions that aren't published yet.
-        """
+        """Excludes any questions that aren't published yet."""
         return Question.objects.filter(pub_date__lte=timezone.now())
 
     def dispatch(self, request, *args, **kwargs):
-        """Check if voting is allowed; if not, redirect to index
-        with an error message."""
+        """Check if voting is allowed."""
+        """If not, redirect to index with an error message."""
         question = self.get_object()
         if not question.can_vote():
             messages.error(request, "Voting is not allowed for this poll.")
@@ -64,28 +63,31 @@ class DetailView(generic.DetailView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        """ Add the user's previous vote to the context. """
+        """Add the user's previous vote to the context."""
         context = super().get_context_data(**kwargs)
         question = self.get_object()
         user = self.request.user
         if user.is_authenticated:
-            previous_vote = Vote.objects.filter(user=user,
-                                                choice__question=question).first()
+            previous_vote = Vote.objects.filter(
+                user=user, choice__question=question).first()
             context['previous_vote'] = previous_vote
         return context
 
 
 class ResultsView(generic.DetailView):
-    """ Displays the results for a specific question. """
+    """Displays the results for a specific question."""
+
     model = Question
     template_name = 'polls/results.html'
 
 
 @login_required
 def vote(request, question_id):
-    """ Handles voting on a specific question by updating the selected choice's
-    vote count. Redirects to the results page or shows an error if no choice
-    was selected. """
+    """Return a response after handling voting on a specific question.
+
+    This function updates the selected choice's vote count. It redirects
+    to the results page or shows an error if no choice was selected.
+    """
     user = request.user
     logger.info(f"User {user.username} is voting on question {question_id}")
     question = get_object_or_404(Question, pk=question_id)
@@ -93,14 +95,16 @@ def vote(request, question_id):
 
     if not question.can_vote():
         logger.warning(
-            f"User {user.username} tried to vote on closed question {question_id} from {ip}")
+            f"User {user.username} tried to vote on closed question "
+            f"{question_id} from {ip}")
         messages.error(request, "Voting is not allowed for this poll.")
         return redirect('polls:index')
 
     try:
         selected_choice = question.choice_set.get(pk=request.POST['choice'])
         logger.info(
-            f"User {user.username} selected choice {selected_choice.id} from {ip}")
+            f"User {user.username} selected choice "
+            f"{selected_choice.id} from {ip}")
     except (KeyError, Choice.DoesNotExist):
         logger.error(f"Choice does not exist for question {question_id}")
         return render(request, 'polls/detail.html', {
@@ -166,18 +170,22 @@ def get_client_ip(request):
 
 @receiver(user_logged_in)
 def login_success(sender, request, user, **kwargs):
+    """Login successful with the user's IP address."""
     ip_addr = get_client_ip(request)
     logger.info(f"{user.username} logged in from {ip_addr}")
 
 
 @receiver(user_logged_out)
 def logout_success(sender, request, user, **kwargs):
+    """Logout successful with the user's IP address."""
     ip_addr = get_client_ip(request)
     logger.info(f"{user.username} logged out from {ip_addr}")
 
 
 @receiver(user_login_failed)
 def login_fail(sender, credentials, request, **kwargs):
+    """Login failed with the user's IP address."""
     ip_addr = get_client_ip(request)
     logger.warning(
-        f"Failed login for {credentials.get('username', 'unknown')} from {ip_addr}")
+        f"Failed login for {credentials.get('username', 'unknown')} "
+        f"from {ip_addr}")
