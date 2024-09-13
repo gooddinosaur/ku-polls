@@ -25,15 +25,24 @@ To set up the project, follow these steps:
   ```
   pip install -r requirements.txt
   ```
-6. **Create migrations for any changes in the models**
+6. **Create a .env file by copying the contents of sample.env**
+   - On Windows:
+     ```
+     copy sample.env .env
+     ```
+   - On macOS/Linux:
+     ```
+     cp sample.env .env
+     ```
+7. **Create migrations for any changes in the models**
   ```
   python manage.py makemigrations
   ```
-7. **Run migrations to apply changes to the database**
+8. **Run migrations to apply changes to the database**
   ```
   python manage.py migrate
   ```
-8. **Load data**
+9. **Load data**
   ```
   python manage.py loaddata data/<filename>
   ```
@@ -42,8 +51,8 @@ To set up the project, follow these steps:
   python manage.py loaddata data/polls-v4.json
   python manage.py loaddata data/votes-v4.json
   ```
-9. **Start the server**
+10. **Start the server**
   ```
   python manage.py runserver
   ```
-10. **Access the application** at [http://localhost:8000/](http://localhost:8000/)
+11. **Access the application** at [http://localhost:8000/](http://localhost:8000/)
