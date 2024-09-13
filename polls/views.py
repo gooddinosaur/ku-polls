@@ -143,17 +143,21 @@ def signup(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            # get named fields from the form data
+            # Get the cleaned form data
             username = form.cleaned_data.get('username')
-            # password input field is named 'password1'
             raw_passwd = form.cleaned_data.get('password1')
+            # Authenticate the new user
             user = authenticate(username=username, password=raw_passwd)
-            login(request, user)
-            return redirect('polls:index')
-        # what if form is not valid?
-        # we should display a message in signup.html
+            if user is not None:
+                # Log the user in and redirect them to the login page
+                login(request, user)
+                messages.success(request,
+                                 'Registration successful. '
+                                 'You are now logged in.')
+                return redirect('polls:index')
+        else:
+            messages.error(request, 'Registration failed.')
     else:
-        # create a user form and display it the signup page
         form = UserCreationForm()
     return render(request, 'registration/signup.html', {'form': form})
 

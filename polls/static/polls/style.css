@@ -37,6 +37,18 @@ th {
 .status.closed {
     color: red;
 }
-.messages li {
+
+ul.messages {
+    list-style-type: none;
+    padding: 0;
+}
+
+.messages .error {
     color: red;
+    font-weight: bold;
+}
+
+.messages .success {
+    color: green;
+    font-weight: bold;
 }
