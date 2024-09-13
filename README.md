@@ -18,6 +18,17 @@ For detailed installation instructions, see the [Installation.md](Installation.m
    ```
 2. Access the link : http://localhost:8000/
 
+## Demo Admin Account
+| Username | Password |
+|----------|----------|
+| admin    | iamadmin |
+
+## Demo User Accounts
+| Username | Password |
+|----------|----------|
+| demo1    | hackme11 |
+| demo2    | hackme22 |
+| demo3    | hackme33 |
 ## Project Documents
 
 All project documents are in the [Project Wiki](../../wiki/Home).
