@@ -43,7 +43,11 @@ Note: After copying, ensure that you update the .env file with any environment-s
   ```
   python manage.py migrate
   ```
-9. **Load data**
+9. **Run tests**
+  ```
+  python manage.py test
+  ```
+10. **Load data**
   ```
   python manage.py loaddata data/<filename>
   ```
@@ -52,8 +56,8 @@ Note: After copying, ensure that you update the .env file with any environment-s
   python manage.py loaddata data/polls-v4.json
   python manage.py loaddata data/votes-v4.json
   ```
-10. **Start the server**
+11. **Start the server**
   ```
   python manage.py runserver
   ```
-11. **Access the application** at [http://localhost:8000/](http://localhost:8000/)
+12. **Access the application** at [http://localhost:8000/](http://localhost:8000/)
