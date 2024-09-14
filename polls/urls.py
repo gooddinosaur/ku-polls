@@ -1,3 +1,10 @@
+"""
+URL configurations for the polls app.
+
+This module defines the URL patterns for the polls application, including
+views for the index page, detail page, results page, and voting functionality.
+"""
+
 from django.urls import path
 from django.views.generic.base import RedirectView
 import polls.views as views
