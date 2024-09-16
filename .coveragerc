@@ -1,0 +1,31 @@
+[run]
+# Include only the polls app code in the coverage report
+include =
+    polls/*
+
+# Exclude files and directories that are not part of the code being tested
+omit =
+    # Exclude Python library files and add-ons
+    /usr/lib/*
+    /usr/local/*
+    ~/.local/*
+    venv/*
+
+    # Exclude Package files __init__.py
+    */__init__.py
+
+    # Exclude Django migration files
+    */migrations/*
+
+    # Exclude Django project configuration files
+    mysite/*
+
+    # Exclude the manage.py file
+    manage.py
+
+[report]
+# Exclude methods that are not relevant for coverage analysis
+exclude_lines =
+    # Exclude __str__ and __repr__ methods
+    def __str__
+    def __repr__
